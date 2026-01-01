@@ -2,6 +2,14 @@
 
 Ce script centralise la personnalité de **K-2SO** (Star Wars) pour toutes vos notifications Home Assistant. Il utilise l'IA pour générer des messages sarcastiques et factuels, avec un système de secours (fallback) intégré.
 
+## 📜 Genèse du projet
+À force de jouer avec l'IA, je me retrouvais avec de nombreuses automatisations où je devais redéfinir à chaque fois le prompt, le contexte et les règles de personnalité de K-2SO. C'était devenu une véritable galère à maintenir dès que je voulais changer un petit détail. 
+
+En packagant tout ça dans un script unique :
+1. **Maintenance simplifiée** : On change le prompt à un seul endroit.
+2. **Code propre** : Mes automatisations font 3 lignes au lieu de 50.
+3. **Robustesse** : J'ai pu ajouter une gestion d'erreur et un fallback global.
+
 ## 🛠️ Le Script Central
 Le script est situé dans `scripts.yaml` sous l'ID `k_2so_generateur_de_message`.
 

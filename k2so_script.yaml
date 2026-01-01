@@ -12,7 +12,7 @@ k_2so_generateur_de_message:
         text: {}
     details:
       name: détails
-      description: 'Données techniques à intégrer (ex: "85%", "Frigo, 5 min")'
+      description: 'Données techniques à intégrer (ex: "85%", "Frigo, 5 min", "{{ variable }}")'
       required: false
       selector:
         text: {}
