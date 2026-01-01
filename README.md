@@ -4,18 +4,17 @@ Ce script centralise la personnalité de **K-2SO** (Star Wars) pour toutes vos n
 
 ## 🛠️ Le Script Central
 Le script est situé dans `scripts.yaml` sous l'ID `k_2so_generateur_de_message`.
-Une copie de sauvegarde est disponible dans : `script.k2so_ia.yaml`.
 
 ### Paramètres (Champs)
 | Champ | Description | Exemple |
 | :--- | :--- | :--- |
 | `mission` | L'action ou l'événement | `cafe`, `batterie`, `volets` |
-| `details` | Données brutes à intégrer | `15%`, `Frigo, 6 minutes` |
+| `details` | Données brutes à intégrer | `15%`, `Frigo, 6 minutes`, `{{ variable }}` |
 | `consigne` | Nuance spécifique pour l'IA | `sois très alarmiste`, `insulte son orgueil` |
 
 ---
 
-## 🚀 Exemples d'utilisation (tirés de vos automatisations)
+## 🚀 Exemples d'utilisation
 
 ### 1. Machine à Laver (Fin de cycle)
 Utilise une consigne pour ajouter une pression sur l'odeur du linge.
