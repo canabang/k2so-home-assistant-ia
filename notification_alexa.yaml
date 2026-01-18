@@ -1,0 +1,83 @@
+alias: notification alexa
+sequence:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: person.canabang
+            state: home
+          - condition: state
+            state: jour
+            entity_id: input_text.jour_nuit
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: state
+                    state: playing
+                    entity_id: media_player.spotifyplus_gael
+                sequence:
+                  - action: media_player.media_play_pause
+                    metadata: {}
+                    data: {}
+                    target:
+                      entity_id:
+                        - media_player.spotifyplus_gael
+                  - action: input_boolean.turn_on
+                    target:
+                      entity_id: input_boolean.pause_musique
+                    data: {}
+            enabled: true
+          - variables:
+              echo: "{{ state_attr('sensor.presence_piece', 'echo') }}"
+              volume_precedent: "{{ state_attr( echo , 'volume_level') }}"
+              duree_message: "{{ ((message | length / 12) + 3) | round(0) }}"
+          - action: media_player.volume_set
+            target:
+              entity_id: |
+                {{ echo }}
+            data:
+              volume_level: 0.3
+            enabled: true
+          - action: notify.alexa_media
+            data:
+              message: "{{ message }}"
+              data:
+                type: tts
+              target: "{{ echo }}"
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: "{{ duree_message | int }}"
+              milliseconds: 0
+          - action: media_player.volume_set
+            target:
+              entity_id: |
+                {{ echo }}
+            data:
+              volume_level: |
+                {{ volume_precedent }}
+            enabled: true
+          - choose:
+              - conditions:
+                  - condition: state
+                    entity_id: input_boolean.pause_musique
+                    state: "on"
+                sequence:
+                  - action: input_boolean.turn_off
+                    target:
+                      entity_id: input_boolean.pause_musique
+                    data: {}
+                  - action: media_player.media_play_pause
+                    metadata: {}
+                    data: {}
+                    target:
+                      entity_id:
+                        - media_player.spotifyplus_gael
+mode: queued
+fields:
+  message:
+    selector:
+      text: {}
+    name: message
+    description: donner un message
+    required: true
+max: 10
