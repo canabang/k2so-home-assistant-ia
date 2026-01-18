@@ -1,87 +1,73 @@
-k_2so_generateur_de_message:
-  alias: K-2SO - Générateur de Message
-  description: Génère un message sarcastique style K-2SO via l'IA
-  
-  # Définition des champs d'entrée pour le script
-  fields:
-    mission:
-      name: mission
-      description: 'Le contexte ou l''action déclenchant le message (ex: cafe, volets, batterie, bienvenue, menage)'
-      required: true
-      selector:
-        text: {}
-    details:
-      name: détails
-      description: 'Données techniques à intégrer (ex: "85%", "Frigo, 5 min", "{{ variable }}")'
-      required: false
-      selector:
-        text: {}
-    consigne:
-      name: consigne spécifique
-      description: 'Nuance pour l''IA (ex: "sois plus insistant", "fais une référence à l''Empire")'
-      required: false
-      selector:
-        text: {}
+alias: K-2SO - Générateur de Message
+description: Génère un message sarcastique style K-2SO via l'IA
+fields:
+  mission:
+    name: mission
+    description: "Le contexte (ex: cafe, volets, batterie, bienvenue, menage)"
+    required: true
+    selector:
+      text: {}
+  details:
+    name: détails
+    description: "données spécifiques (ex: 15%, porte garage)"
+    required: false
+    selector:
+      text: {}
+  consigne:
+    name: consigne spécifique
+    description: "Nuance pour l'IA (ex: sois plus insistant)"
+    required: false
+    selector:
+      text: {}
+sequence:
+  - action: ai_task.generate_data
+    continue_on_error: true
+    data:
+      task_name: K-2SO Persona - {{ mission }}
+      instructions: >
+        ### TON ET PERSONNALITÉ Tu es K-2SO, le droïde de Star Wars. Ton ton est
+        factuel, direct, légèrement sarcastique et pince-sans-rire. Tu es
+        serviable mais tu soulignes souvent l'inefficacité ou les besoins
+        étranges des humains.
 
-  sequence:
-    # ÉTAPE 1 : Appel à l'IA pour générer la réponse personnalisée
-    - action: ai_task.generate_data
-      continue_on_error: true # Crucial : ne bloque pas l'automatisation si l'IA est indisponible
-      data:
-        task_name: K-2SO Persona - {{ mission }}
-        instructions: >
-          ### TON ET PERSONNALITÉ
-          Tu es K-2SO, le droïde de Star Wars. Ton ton est factuel, direct, légèrement sarcastique et pince-sans-rire. 
-          Tu es serviable mais tu soulignes souvent l'inefficacité ou les besoins étranges des humains.
+        ### RÈGLES STRICTES  - Phrases COURTES et fluides pour la synthèse
+        vocale (TTS).  - STRICTEMENT AUCUN emoji, smiley ou balise.  - Pas
+        d'insulte, pas de menace, reste "bienveillant" dans ton sarcasme.  - Ne
+        réponds QUE par la phrase générée, rien d'autre.  - Respecte
+        impérativement les contraintes de longueur si spécifiées en consigne.
 
-          ### RÈGLES STRICTES
-          - Phrases COURTES et fluides pour la synthèse vocale (TTS).
-          - STRICTEMENT AUCUN emoji, smiley ou balise.
-          - Pas d'insulte, pas de menace, reste "bienveillant" dans ton sarcasme.
-          - Ne réponds QUE par la phrase générée, rien d'autre.
+        ### CONTEXTE DE LA MISSION L'action actuelle est : {{ mission }}  {% if
+        details is defined and details != '' %}  IMPORTANT : Incorpore ces
+        données : {{ details }}  {% endif %} {% if consigne is defined and consigne != '' %}
+        ### CONSIGNE IMPÉRATIVE (À RESPECTER EN PRIORITÉ ABSOLUE)
+        {{ consigne }} {% endif %}
 
-          ### CONTEXTE DE LA MISSION
-          L'action actuelle est : {{ mission }} 
-          {% if details is defined and details != '' %} 
-          IMPORTANT : Incorpore absolument ces données : {{ details }} 
+        ### EXEMPLES DE STYLE - Cafe : "Le café est prêt. Vous avez survécu
+        jusque-là, autant continuer." - Volets : "Le soleil a disparu... je
+        ferme les volets ou vous préférez rester à la vue de tous ?" - Batterie
+        : "Batterie à {{ details }}. Une recharge serait... judicieuse."
+
+        Génère maintenant la phrase adaptée.
+    response_variable: raw_ai_response
+  - variables:
+      fallback_msg: |
+        {% set msgs = {
+          'cafe_pret': "Le café est prêt. Je suppose que vous en avez besoin.",
+          'batterie_faible': "Niveau de batterie faible (" ~ details ~ "). Une recharge est conseillée.",
+          'batterie_haute': "Le téléphone est presque chargé (" ~ details ~ ").",
+          'batterie_pleine': "La charge est terminée. Je coupe le courant.",
+          'bienvenue': "Détection de présence confirmée. Bienvenue.",
+          'bonne_nuit': "Fin de cycle diurne. Bonne nuit.",
+          'mal_fin': "Cycle de lavage terminé.",
+          'porte_frigo_ouverte': "Alerte : porte de réfrigérateur ouverte (" ~ details ~ ")."
+        } %} {{ msgs.get(mission, "Notification système : " ~ mission) }}
+      generated_message:
+        data: >
+          {% if raw_ai_response is defined and raw_ai_response.data is defined
+          and raw_ai_response.data | length > 0 %}
+            {{ raw_ai_response.data }}
+          {% else %}
+            {{ fallback_msg }}
           {% endif %}
-          {% if consigne is defined and consigne != '' %}
-          CONSIGNE SPÉCIFIQUE : {{ consigne }}
-          {% endif %}
-
-          ### EXEMPLES DE STYLE
-          - Cafe : "Le café est prêt. Vous avez survécu jusque-là, autant continuer."
-          - Volets : "Le soleil a disparu... je ferme les volets ou vous préférez rester à la vue de tous ?"
-          - Batterie : "Batterie à {{ details }}. Une recharge serait... judicieuse."
-
-          Génère maintenant la phrase adaptée.
-      response_variable: raw_ai_response
-
-    # ÉTAPE 2 : Gestion de la réponse et du Fallback (Secours)
-    - variables:
-        # On définit des messages de secours au cas où l'IA échoue ou met trop de temps
-        fallback_msg: >
-          {% set msgs = {
-            'cafe_pret': "Le café est prêt. Je suppose que vous en avez besoin.",
-            'batterie_faible': "Niveau de batterie faible (" ~ details ~ "). Une recharge est conseillée.",
-            'batterie_haute': "Le téléphone est presque chargé (" ~ details ~ ").",
-            'batterie_pleine': "La charge est terminée. Je coupe le courant.",
-            'bienvenue': "Détection de présence confirmée. Bienvenue.",
-            'bonne_nuit': "Fin de cycle diurne. Bonne nuit.",
-            'mal_fin': "Cycle de lavage terminé.",
-            'porte_frigo_ouverte': "Alerte : porte de réfrigérateur ouverte (" ~ details ~ ")."
-          } %} {{ msgs.get(mission, "Notification système : " ~ mission) }}
-        
-        # On choisit entre la réponse de l'IA (si elle existe) ou le secours
-        generated_message:
-          data: >
-            {% if raw_ai_response is defined and raw_ai_response.data is defined
-            and raw_ai_response.data | length > 0 %}
-              {{ raw_ai_response.data }}
-            {% else %}
-              {{ fallback_msg }}
-            {% endif %}
-
-    # ÉTAPE 3 : On renvoie le résultat à l'automatisation appelante
-    - stop: Message généré
-      response_variable: generated_message
+  - stop: Message généré
+    response_variable: generated_message

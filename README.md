@@ -10,6 +10,27 @@ En packagant tout ça dans un script unique :
 2. **Code propre** : Mes automatisations font 3 lignes au lieu de 50.
 3. **Robustesse** : J'ai pu ajouter une gestion d'erreur et un fallback global.
 
+## 🧠 Le choix du cerveau (Cloud vs Local)
+Ce script est agnostique : il fonctionne aussi bien avec des solutions Cloud (**Gemini**, **OpenAI**) qu'avec du Local LLM.
+
+Cependant, j'ai migré d'une solution Cloud vers du **100% Local** via **Ollama** et le modèle **Llama 3.2** :
+- **Confidentialité** : Aucune donnée de votre maison (températures, présence, usages) ne quitte votre réseau.
+- **Accessibilité** : Llama 3.2 tourne de façon fluide même sur une **petite carte graphique** (ex: NVIDIA GTX 1050 Ti 4GB).
+- **Latence réelle** : Comptez environ **2.5 secondes** pour la génération complète sur ce type de matériel (ce qui reste très acceptable pour du local).
+
+## ⚙️ Configuration Infrastructure (Ollama)
+Pour faire tourner efficacement l'IA sur un matériel modeste, voici les paramètres recommandés pour votre serveur **Ollama** :
+
+### Variables d'environnement
+Afin d'éviter les surcharges de VRAM et garantir une réponse stable :
+```bash
+OLLAMA_MAX_LOADED_MODELS=1
+OLLAMA_NUM_PARALLEL=1
+```
+
+### Paramètre de modèle
+Utilisez `keep_alive: -1` dans l'intégration Home Assistant (ou via l'API) pour que le modèle reste chargé en mémoire vidéo, supprimant ainsi le temps de chargement à chaque requête.
+
 ## 🛠️ Le Script Central
 Le script est situé dans `scripts.yaml` sous l'ID `k_2so_generateur_de_message`.
 
@@ -18,7 +39,7 @@ Le script est situé dans `scripts.yaml` sous l'ID `k_2so_generateur_de_message`
 | :--- | :--- | :--- |
 | `mission` | L'action ou l'événement | `cafe`, `batterie`, `volets` |
 | `details` | Données brutes à intégrer | `15%`, `Frigo, 6 minutes`, `{{ variable }}` |
-| `consigne` | Nuance spécifique pour l'IA | `sois très alarmiste`, `insulte son orgueil` |
+| `consigne` | Ordre impératif (priorité absolue) | `IMPÉRATIF : MAX 10 MOTS. Sarcastique.` |
 
 ---
 
@@ -62,11 +83,13 @@ response_variable: generated_message
 
 ---
 
-## 💡 Astuces pour la créativité
-Pour que l'IA soit plus créative, n'hésitez pas à remplir le champ `consigne` avec des ordres comme :
-- *"Fais une référence à l'Empire."*
-- *"Sois particulièrement condescendant sur la mémoire de l'utilisateur."*
-- *"Dis-le comme si c'était la fin du monde."*
+## 💡 Maîtriser la concision (Voice Assistant)
+Le script est conçu pour être loquace par défaut (idéal pour Discord). Cependant, pour une utilisation **vocale** (Alexa/Google), la `consigne` est traitée comme une **priorité absolue**.
+
+Pour forcer K-2SO à être bref, utilisez des mots-clés impératifs :
+- `"IMPÉRATIF : MAXIMUM 10 MOTS. Sarcastique."`
+- `"ORDRE : SOIS TRÈS BREF. Style militaire."`
+- `"STRICTEMENT 5 MOTS MAX."`
 
 ## 🛡️ Sécurité (Fallback)
 Le script contient un dictionnaire de messages prédéfinis. Si l'IA rencontre une erreur ou est indisponible, il renverra automatiquement un message cohérent basé sur la `mission` fournie.
