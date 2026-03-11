@@ -1,0 +1,43 @@
+alias: "📷 Frigate : Notification K-2SO (Interface HA)"
+description: "Créé une notification persistante dans HA pour chaque review de Frigate."
+mode: parallel
+
+# 1. DÉCLENCHEURS (TRIGGERS)
+# Écoute le topic MQTT utilisé par Frigate v0.17 pour envoyer les résumés
+trigger:
+  - platform: mqtt
+    topic: frigate/reviews
+
+# 2. CONDITIONS D'EXÉCUTION
+# S'assure de ne filtrer que les messages post-détection contenant le résumé IA
+condition:
+  # Vérifie que c'est bien l'événement GenAI asynchrone
+  - condition: template
+    value_template: "{{ trigger.payload_json['type'] == 'genai' }}"
+  # S'assure que les données IA sont présentes dans le payload
+  - condition: template
+    value_template: "{{ trigger.payload_json['after']['data']['metadata'] is not none }}"
+
+# 3. ACTIONS À RÉALISER
+# Création d'une notification UI persistante qui s'empilera sans s'écraser tant que l'ID de l'événement diffère
+action:
+  - service: persistent_notification.create
+    data:
+      title: "📷 {{ trigger.payload_json['after']['data']['metadata']['title'] | default('Nouvelle Alerte') }}"
+      
+      # Identifiant unique de notification lié à l'ID de l'événement Frigate
+      notification_id: "{{ trigger.payload_json['after']['id'] }}"
+      
+      # Construction du message en Markdown avec données IA
+      message: >
+        **Résumé K-2SO :** {{ trigger.payload_json['after']['data']['metadata']['shortSummary'] | default('Résumé indisponible') }}
+        
+        **Description détaillée :** 
+        {{ trigger.payload_json['after']['data']['metadata']['scene'] | default('Aucun détail fourni par la base de données.') }}
+        
+        **Caméra :** {{ trigger.payload_json['after']['camera'] }}
+        **Confiance :** {{ trigger.payload_json['after']['data']['metadata']['confidence'] | default('inconnue') }}
+        
+        [Voir la vidéo sur Frigate](https://frigate.canagalactica.ovh/review?id={{ trigger.payload_json['after']['id'] }})
+        
+        ![Vignette](https://frigate.canagalactica.ovh/api/events/{{ trigger.payload_json['after']['id'] }}/thumbnail.jpg)
